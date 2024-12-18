@@ -10,12 +10,15 @@ from memory_profiler import profile
 @task(retries=3)
 @profile
 def get_positron_locations_data(username: str, password: str) -> pd.DataFrame:
+    # print(f"Memória antes de get_positron_locations_data: {get_memory_usage()}")
     Positron.start(username, password)
     total_pages = Positron.get_total_pages().get('total_pages')
     df = Positron.get_locations(total_pages)
+    # print(f"Memória depois de get_positron_locations_data: {get_memory_usage()}")
     return df
 
 @task
+@profile
 @profile
 def update_excel_data(
         new_data: pd.DataFrame,
@@ -27,6 +30,7 @@ def update_excel_data(
         worksheet_name: str,
         authorization_code: str = None
 ) -> None:     
+    # print(f"Memória antes de update_excel_data: {get_memory_usage()}")
     if authorization_code:
         Excel.set_authorization_code(authorization_code=authorization_code)
 
@@ -40,8 +44,10 @@ def update_excel_data(
     
     Excel._Excel__refresh_token()
     Excel.update_sheet(data=new_data)
+    # print(f"Memória depois de update_excel_data: {get_memory_usage()}")
     
 @task
+@profile
 @profile
 def get_on_redis(
     host: str,
@@ -51,6 +57,7 @@ def get_on_redis(
     name: str,
     decode_responses: bool = True
 ) -> str:
+    # print(f"Memória antes de get_on_redis: {get_memory_usage()}")
     r = redis.Redis(
         host=host,
         port=port,
