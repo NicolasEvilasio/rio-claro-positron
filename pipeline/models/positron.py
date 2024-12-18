@@ -37,7 +37,9 @@ class Positron:
                 '--disable-setuid-sandbox',
                 '--disable-gpu',
                 '--disable-web-security',
-                '--disable-features=IsolateOrigins,site-per-process'
+                '--disable-features=IsolateOrigins,site-per-process',
+                '--disable-software-rasterizer',
+                '--single-process'
             ]
         )
         cls.__page = browser.new_page(
@@ -49,7 +51,7 @@ class Positron:
     def __authenticate(cls):
         try:
             endpoint = '/login.xhtml'
-            cls.__page.goto(cls.__url + endpoint, wait_until='networkidle')
+            cls.__page.goto(cls.__url + endpoint, wait_until='domcontentloaded')
             
             # Wait until the username and password fields are loaded
             cls.__page.wait_for_selector("#j_username", timeout=5000)
@@ -85,7 +87,7 @@ class Positron:
     def get_total_pages(cls) -> dict:
         try:
             endpoint = '/position.xhtml'
-            cls.__page.goto(cls.__url + endpoint, wait_until='networkidle')
+            cls.__page.goto(cls.__url + endpoint, wait_until='domcontentloaded')
             
             # Wait for the dropdown to load
             cls.__page.wait_for_selector(r"#selectionForm\:selectionType_label", timeout=30000)
@@ -101,7 +103,7 @@ class Positron:
                 
                 # Wait for the table to update
                 cls.__page.wait_for_selector(r"#tablePositionsForm\:tablePositions_data", timeout=30000)
-                cls.__page.wait_for_load_state('networkidle')
+                cls.__page.wait_for_load_state('domcontentloaded')
                 
                 # Wait for the table to load
                 cls.__page.wait_for_selector(r"#tablePositionsForm\:tablePositions_data tr[role='row']", timeout=10000)
