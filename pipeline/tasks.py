@@ -5,9 +5,10 @@ from prefect import flow, task
 import pandas as pd
 import sys
 import os
+from memory_profiler import profile
 
-
-@task
+@task(retries=3)
+@profile
 def get_positron_locations_data(username: str, password: str) -> pd.DataFrame:
     Positron.start(username, password)
     total_pages = Positron.get_total_pages().get('total_pages')
@@ -15,6 +16,7 @@ def get_positron_locations_data(username: str, password: str) -> pd.DataFrame:
     return df
 
 @task
+@profile
 def update_excel_data(
         new_data: pd.DataFrame,
         client_id: str, 
@@ -40,6 +42,7 @@ def update_excel_data(
     Excel.update_sheet(data=new_data)
     
 @task
+@profile
 def get_on_redis(
     host: str,
     port: int,
@@ -55,7 +58,8 @@ def get_on_redis(
         username=username,
         password=password,
     )
-    return r.hgetall(name=name)
+    result = r.hgetall(name=name)
+    return result
 
 # @task
 def set_on_redis(
