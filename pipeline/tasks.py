@@ -19,7 +19,6 @@ def get_positron_locations_data(username: str, password: str) -> pd.DataFrame:
 
 @task
 @profile
-@profile
 def update_excel_data(
         new_data: pd.DataFrame,
         client_id: str, 
@@ -47,7 +46,6 @@ def update_excel_data(
     # print(f"Memória depois de update_excel_data: {get_memory_usage()}")
     
 @task
-@profile
 @profile
 def get_on_redis(
     host: str,
