@@ -28,7 +28,10 @@ class Positron:
         
     @classmethod
     def __open_browser(cls):
+        print("Configurando o playwright para abrir o browser")
         p = sync_playwright().start()
+        
+        print("Iniciando o browser")
         browser = p.chromium.launch(
             headless=True,
             args=[
@@ -42,29 +45,38 @@ class Positron:
                 '--single-process'
             ]
         )
+        print("Browser iniciado com sucesso")
+        
+        print("Criando uma nova página")
         cls.__page = browser.new_page(
             viewport={'width': 1920, 'height': 1080},
             user_agent='Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
         )
+        print("Página criada com sucesso")
 
     @classmethod
     def __authenticate(cls):
         try:
+            print("Navegando para a página de login")
             endpoint = '/login.xhtml'
             cls.__page.goto(cls.__url + endpoint, wait_until='domcontentloaded')
             
+            print("Esperando o carregamento dos campos de usuário e senha")
             # Wait until the username and password fields are loaded
             cls.__page.wait_for_selector("#j_username", timeout=5000)
             cls.__page.wait_for_selector("#password", timeout=5000)
             
+            print("Preenchendo o campo de usuário")
             # Fill in the username field
             cls.__page.fill("#j_username", cls.__username)
             cls.__page.dispatch_event("#j_username", "input")
             
+            print("Preenchendo o campo de senha")
             # Fill in the password field
             cls.__page.fill("#password", cls.__password)
             cls.__page.dispatch_event("#password", "input")
             
+            print("Alterando a classe do botão e removendo o atributo 'disabled'")
             # Change the button class and remove the 'disabled' attribute
             cls.__page.evaluate("""
                 var button = document.querySelector('#enterButton');
@@ -73,9 +85,11 @@ class Positron:
                 button.setAttribute('aria-disabled', 'false');
             """)
             
+            print("Clicando no botão de login")
             # Click the enter button
             cls.__page.click("#enterButton")
             
+            print("Esperando o carregamento de um elemento específico após o login")
             # Wait until a specific element appears after login
             cls.__page.wait_for_selector(".topbar-items.fadeInDown.animated", timeout=10000)
             print("Login realizado com sucesso")
@@ -86,21 +100,26 @@ class Positron:
     @classmethod
     def get_total_pages(cls) -> dict:
         try:
+            print("Navegando para a página de posições")
             endpoint = '/position.xhtml'
             cls.__page.goto(cls.__url + endpoint, wait_until='domcontentloaded')
             
+            print("Esperando o carregamento do dropdown")
             # Wait for the dropdown to load
             cls.__page.wait_for_selector(r"#selectionForm\:selectionType_label", timeout=30000)
             
+            print("Esperando um curto período para garantir que a página carregou completamente")
             # Wait for a short time to ensure the page loaded completely
             cls.__page.wait_for_timeout(2000)
             
             try:
+                print("Clicando para selecionar 'All Trackers'")
                 # Click to select "All Trackers"
                 cls.__page.click(r"#selectionForm\:selectionType_label")
                 cls.__page.wait_for_timeout(1000)  # Wait for the dropdown to open
                 cls.__page.click(r"#selectionForm\:selectionType_0")
                 
+                print("Esperando o carregamento da tabela")
                 # Wait for the table to update
                 cls.__page.wait_for_selector(r"#tablePositionsForm\:tablePositions_data", timeout=30000)
                 cls.__page.wait_for_load_state('domcontentloaded')
@@ -119,6 +138,7 @@ class Positron:
                     print("Total element not found")
                     raise Exception("Total element not found")
                 
+                print("Buscando o número de placas por página")
                 # Get the number of plates per page
                 select_element = cls.__page.query_selector('[name="tablePositionsForm:tablePositions_rppDD"]')
                 if select_element:
@@ -142,6 +162,7 @@ class Positron:
     @classmethod
     def __read_rows(cls, page_number: int) -> pd.DataFrame:
         try:
+            print(f"Esperando a página {page_number + 1} ser ativa no paginador inferior")
             # Wait until the correct page is active in the lower paginator
             seletor = rf"#tablePositionsForm\:tablePositions_paginator_bottom .ui-paginator-pages a[aria-label='Page {page_number + 1}'].ui-state-active"
             cls.__page.wait_for_selector(
@@ -160,6 +181,7 @@ class Positron:
             lines = cls.__page.query_selector_all(r"#tablePositionsForm\:tablePositions_data tr[role='row']")
             print(f"Found {len(lines)} valid lines")
             
+            print("Lendo as linhas da tabela")
             for line in lines:
                 try:
                     elements = {
@@ -209,6 +231,7 @@ class Positron:
                     print(f"Error processing line: {str(e)}")
                     continue
             
+            print("Criando o DataFrame")
             if data:
                 # Create DataFrame
                 df = pd.DataFrame(data)
@@ -250,6 +273,7 @@ class Positron:
     def get_locations(cls, total_pages) -> pd.DataFrame:
         dfs_pages = []
         
+        print("Iniciando a leitura das páginas")
         print(f"Total of pages: {total_pages}")
         for page in range(0, total_pages):
             print(f"Reading page {page + 1} of {total_pages}")
