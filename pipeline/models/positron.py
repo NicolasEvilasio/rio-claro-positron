@@ -317,7 +317,7 @@ class Positron:
             
             try:
                 df_final[['driver', 'truck_cab']] = pd.DataFrame(df_final['tracker'].apply(cls.__transform_tracker).tolist())
-                df_final.to_csv('df_final.csv', index=False)
+                # df_final.to_csv('df_final.csv', index=False)
             except Exception as e:
                 print(f"Error transforming tracker: {str(e)}")
                 raise e
