@@ -1,0 +1,6 @@
+repos:
+-   repo: https://github.com/karlicoss/detect-todo
+    rev: v0.1.0  # Use a versão mais recente
+    hooks:
+    -   id: detect-todo
+        args: ['--no-todo']  # Bloqueia commits com TODO 

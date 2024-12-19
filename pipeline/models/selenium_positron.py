@@ -47,6 +47,12 @@ class Positron:
             options.add_argument('--window-size=800,600')
             options.add_argument('--disable-dev-shm-usage')
             options.add_argument('--enable-automation')
+            options.add_argument('--disable-gpu')
+            
+            #logs detalhados
+            options.set_preference("devtools.console.stdout.content", True)
+            options.set_preference("browser.dom.window.dump.enabled", True)
+            options.log.level = "trace"
             
             # Simular navegador real
             options.set_preference("general.useragent.override", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36")
@@ -81,12 +87,14 @@ class Positron:
         cls.__wait.until(EC.presence_of_element_located((By.TAG_NAME, "html")))
         print("Browser started successfully")
         
+        print(cls.__driver.page_source) # TODO: Remove this line
+        
     
     @classmethod
     def __authenticate(cls):
         print("Starting authentication")
         cls.__driver.get(cls.__url)
-        print(cls.__driver.page_source)
+        print(cls.__driver.page_source) # TODO: Remove this line
         # Login
         username_input = cls.__wait.until(
             EC.presence_of_element_located((By.ID, "j_username"))
