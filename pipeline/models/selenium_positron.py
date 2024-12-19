@@ -55,14 +55,6 @@ class Positron:
         print("Starting Firefox browser")
         cls.__driver = webdriver.Firefox(options=options)
         
-        # Capture browser logs
-        browser_logs = cls.__driver.get_log('browser')
-        print("Browser logs:", browser_logs)
-        
-        # Capture driver logs
-        driver_logs = cls.__driver.get_log('driver')
-        print("Driver logs:", driver_logs)
-        
         # Add custom headers
         cls.__driver.execute_script("Object.defineProperty(navigator, 'webdriver', {get: () => undefined})")
         
