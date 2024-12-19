@@ -86,6 +86,7 @@ class Positron:
     def __authenticate(cls):
         print("Starting authentication")
         cls.__driver.get(cls.__url)
+        print(cls.__driver.page_source)
         # Login
         username_input = cls.__wait.until(
             EC.presence_of_element_located((By.ID, "j_username"))
