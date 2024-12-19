@@ -1,15 +1,18 @@
 # Use uma imagem base do Python
-FROM python:3.11-slim
+FROM python:3.10
 
 # Definir variáveis de ambiente
 ENV PYTHONUNBUFFERED=1
 ENV PYTHONPATH=/opt/prefect
 ENV PORT=8080
 
+WORKDIR /opt/prefect
+
 # Instalar dependências do sistema e Firefox
 RUN apt-get update && apt-get install -y \
     firefox-esr \
     wget \
+    xvfb \
     && rm -rf /var/lib/apt/lists/*
 
 # Instalar o GeckoDriver versão 0.35.0
@@ -18,8 +21,6 @@ RUN wget https://github.com/mozilla/geckodriver/releases/download/v0.35.0/geckod
     && chmod +x geckodriver \
     && mv geckodriver /usr/local/bin/ \
     && rm geckodriver-v0.35.0-linux64.tar.gz
-
-WORKDIR /opt/prefect
 
 # Copiar arquivos de dependências
 COPY pyproject.toml poetry.lock ./
@@ -32,8 +33,8 @@ RUN pip install poetry && \
 # Copiar todo o conteúdo do projeto
 COPY . .
 
-# Instalar o pacote
-RUN pip install .
+# # Instalar o pacote
+# RUN pip install .
 
 # Expor a porta 8080
 EXPOSE 8080

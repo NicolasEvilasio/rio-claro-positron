@@ -6,7 +6,7 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 import pandas as pd
-from datetime import datetime
+from pyvirtualdisplay import Display
 
 class Positron:
     __username = None
@@ -15,6 +15,7 @@ class Positron:
     __url = "https://www.positronrt.com.br/rastreador5"
     __wait = None
     headless = True
+    __display = None
     
     @classmethod
     def start(cls, username, password):
@@ -33,16 +34,48 @@ class Positron:
         
     @classmethod
     def __open_browser(cls):
+        print("Starting virtual display")
+        cls.__display = Display(visible=0, size=(800, 600))
+        cls.__display.start()
+        
         print("Setting Firefox options")
         options = Options()
         
         if cls.headless:
             options.add_argument('--headless')
             options.add_argument('--no-sandbox')
+            options.add_argument('--window-size=800,600')
             options.add_argument('--disable-dev-shm-usage')
+            options.add_argument('--enable-automation')
+            
+            # Simular navegador real
+            options.set_preference("general.useragent.override", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36")
+            options.set_preference("dom.webdriver.enabled", False)
+            options.set_preference('useAutomationExtension', False)
+            
+            # Aceitar cookies e habilitar JavaScript
+            options.set_preference("network.cookie.cookieBehavior", 0)
+            options.set_preference("javascript.enabled", True)
+            
+            # Configurar idioma e timezone
+            options.set_preference("intl.accept_languages", "pt-BR, pt")
+            options.set_preference("browser.timezone.mode", "system")
+            
+            # Simular recursos de hardware
+            options.set_preference("media.navigator.enabled", True)
+            options.set_preference("media.navigator.permission.disabled", True)
+            options.set_preference("dom.webnotifications.enabled", True)
+            
+            # Evitar fingerprinting
+            options.set_preference("privacy.resistFingerprinting", False)
+            options.set_preference("webgl.disabled", False)
             
         print("Starting Firefox browser")
         cls.__driver = webdriver.Firefox(options=options)
+        
+        # Adicionar headers personalizados
+        cls.__driver.execute_script("Object.defineProperty(navigator, 'webdriver', {get: () => undefined})")
+        
         print("Waiting for the browser to open...")
         cls.__wait = WebDriverWait(cls.__driver, 30)
         cls.__wait.until(EC.presence_of_element_located((By.TAG_NAME, "html")))
@@ -300,5 +333,8 @@ class Positron:
     
     @classmethod
     def close_browser(cls):
-        cls.__driver.quit()
-        print("Browser closed successfully")
+        if cls.__driver:
+            cls.__driver.quit()
+        if cls.__display:
+            cls.__display.stop()
+        print("Browser and display closed successfully")
