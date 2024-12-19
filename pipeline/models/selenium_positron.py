@@ -69,6 +69,11 @@ class Positron:
     @classmethod
     def __authenticate(cls):
         print("Starting authentication")
+        print("trying to access google")
+        cls.__driver.get("https://www.google.com")
+        print("accessed google")
+        print(cls.__driver.page_source) # TODO: Remove this line
+        
         cls.__driver.get(cls.__url)
         print(cls.__driver.page_source) # TODO: Remove this line
         # Login
