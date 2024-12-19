@@ -254,9 +254,7 @@ class Positron:
             raise e
         
     @classmethod
-    # def __transform_data(cls, df: pd.DataFrame) -> pd.DataFrame:
-    def __transform_tracker(cls, text):
-        # def split_tracker(text):
+    def __transform_tracker(cls, text) -> tuple:
         if pd.isna(text):
             return pd.NA, pd.NA
 
@@ -272,11 +270,6 @@ class Positron:
         
         return pd.NA, text
 
-        # Apply the function and create new columns
-        # df[['driver', 'truck_cab']] = pd.DataFrame(df['tracker'].apply(split_tracker).tolist())
-
-        return df
-    
     @classmethod
     def get_locations(cls, total_pages) -> pd.DataFrame:
         dfs_pages = []
@@ -300,7 +293,7 @@ class Positron:
                 if "ui-state-disabled" in button_class:
                     print("Next page button is disabled")
                     break
-            # Click on the next page button
+                # Click on the next page button
                 next_button.click()
                 print("Clicked on the next page button")
                 

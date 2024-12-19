@@ -1,24 +1,19 @@
 import redis
-from pipeline.models.positron import Positron
+from pipeline.models.selenium_positron import Positron
 from pipeline.models.excel import Excel
-from prefect import flow, task
+from prefect import task
 import pandas as pd
-import sys
-import os
-from memory_profiler import profile
 
 @task(retries=3)
-@profile
-def get_positron_locations_data(username: str, password: str) -> pd.DataFrame:
-    # print(f"Memória antes de get_positron_locations_data: {get_memory_usage()}")
+def get_positron_locations_data(username: str, password: str, headless: bool = True) -> pd.DataFrame:
+    Positron.set_headless(headless)
     Positron.start(username, password)
     total_pages = Positron.get_total_pages().get('total_pages')
     df = Positron.get_locations(total_pages)
-    # print(f"Memória depois de get_positron_locations_data: {get_memory_usage()}")
+    Positron.close_browser()
     return df
 
 @task
-@profile
 def update_excel_data(
         new_data: pd.DataFrame,
         client_id: str, 
@@ -29,7 +24,6 @@ def update_excel_data(
         worksheet_name: str,
         authorization_code: str = None
 ) -> None:     
-    # print(f"Memória antes de update_excel_data: {get_memory_usage()}")
     if authorization_code:
         Excel.set_authorization_code(authorization_code=authorization_code)
 
@@ -43,10 +37,8 @@ def update_excel_data(
     
     Excel._Excel__refresh_token()
     Excel.update_sheet(data=new_data)
-    # print(f"Memória depois de update_excel_data: {get_memory_usage()}")
     
 @task
-@profile
 def get_on_redis(
     host: str,
     port: int,
@@ -55,7 +47,6 @@ def get_on_redis(
     name: str,
     decode_responses: bool = True
 ) -> str:
-    # print(f"Memória antes de get_on_redis: {get_memory_usage()}")
     r = redis.Redis(
         host=host,
         port=port,

@@ -1,12 +1,16 @@
 import requests
 import pandas as pd
 from urllib.parse import quote
+import time
+from tenacity import retry, wait_exponential, stop_after_attempt, before_sleep_log, after_log
+import logging 
 
+
+# Configurar logger
+logger = logging.getLogger(__name__)
 
 class Excel:
     __client_id = None
-    # __client_secret = None
-    # __tenant_id = None
     __scope = None
     __redirect_uri = None
     __authorization_code = None
@@ -19,8 +23,6 @@ class Excel:
     def start_session(
         cls, 
         client_id: str, 
-        # client_secret: str, 
-        # tenant_id: str, 
         scopes: list, 
         redirect_uri: str, 
         token: str = None, 
@@ -29,8 +31,6 @@ class Excel:
         worksheet_name: str = None
     ):
         cls.__client_id = client_id
-        # cls.__client_secret = client_secret
-        # cls.__tenant_id = tenant_id
         cls.__redirect_uri = redirect_uri
         cls.__file_id = file_id
         cls.__worksheet_name = worksheet_name
@@ -112,50 +112,61 @@ class Excel:
             raise e
 
     @classmethod
-    def update_sheet(cls, data: pd.DataFrame):
-        headers = {
-            'Authorization': f'Bearer {cls.__token["access_token"]}',
-            'Content-Type': 'application/json'
-        }
+    @retry(
+        wait=wait_exponential(multiplier=1, min=4, max=10),
+        stop=stop_after_attempt(5),
+        before_sleep=before_sleep_log(logger, log_level=logging.WARNING),
+        after=after_log(logger, log_level=logging.ERROR)
+    )
+    def update_sheet(cls, data: pd.DataFrame) -> None:
+        try:
+            headers = {
+                'Authorization': f'Bearer {cls.__token["access_token"]}',
+                'Content-Type': 'application/json'
+            }
 
-        url_get = f'https://graph.microsoft.com/v1.0/me/drive/items/{cls.__file_id}/workbook/worksheets/{cls.__worksheet_name}/usedRange'
+            url_get = f'https://graph.microsoft.com/v1.0/me/drive/items/{cls.__file_id}/workbook/worksheets/{cls.__worksheet_name}/usedRange'
 
-        # Get data from sheet
-        response_get = requests.get(url_get, headers=headers)
-        if response_get.status_code == 200:
-            sheet_data = response_get.json()
-            values = sheet_data.get('values', [])
+            # Get data from sheet
+            response_get = requests.get(url_get, headers=headers)
+            if response_get.status_code == 200:
+                sheet_data = response_get.json()
+                values = sheet_data.get('values', [])
 
-            for index, row in data.iterrows():
-                truck_cab = row['truck_cab']
-                address = row['address']
-                address_timestamp = row['datetime']
+                for index, row in data.iterrows():
+                    truck_cab = row['truck_cab']
+                    address = row['address']
+                    address_timestamp = row['datetime']
 
-                # Search for the row where column "E" matches the "truck_cab" value
-                row_index = None
-                for i, sheet_row in enumerate(values):
-                    if len(sheet_row) > 4 and sheet_row[4] == truck_cab:  # Column "E"
-                        row_index = i + 1  # Add 1 for Excel index
-                        break
+                    # Search for the row where column "E" matches the "truck_cab" value
+                    row_index = None
+                    for i, sheet_row in enumerate(values):
+                        if len(sheet_row) > 4 and sheet_row[4] == truck_cab:  # Column "E"
+                            row_index = i + 1  # Add 1 for Excel index
+                            break
 
-                if row_index:
-                    # Update cell in columns "O:P" for the found row
-                    range_address = f'O{row_index}:P{row_index}'
-                    url_update = f'https://graph.microsoft.com/v1.0/me/drive/items/{cls.__file_id}/workbook/worksheets/{cls.__worksheet_name}/range(address=\'{range_address}\')'
+                    if row_index:
+                        # Update cell in columns "O:P" for the found row
+                        range_address = f'O{row_index}:P{row_index}'
+                        url_update = f'https://graph.microsoft.com/v1.0/me/drive/items/{cls.__file_id}/workbook/worksheets/{cls.__worksheet_name}/range(address=\'{range_address}\')'
 
-                    # Update data
-                    update_data = {
-                        'values': [[address, address_timestamp]]
-                    }
+                        # Update data
+                        update_data = {
+                            'values': [[address, address_timestamp]]
+                        }
 
-                    # Make request to update cell
-                    response_update = requests.patch(url_update, json=update_data, headers=headers)
-                    if not response_update.status_code == 200:
-                        print(f'Error updating cell: {response_update.status_code}, {response_update.text}')
-                else:
-                    print(f"Value '{truck_cab}' not found in column E.")
-        else:
-            raise Exception(f'Error getting sheet data: {response_get.status_code}, {response_get.text}')
+                        # Make request to update cell
+                        response_update = requests.patch(url_update, json=update_data, headers=headers)
+                        if not response_update.status_code == 200:
+                            print(f'Error updating cell: {response_update.status_code}, {response_update.text}')
+                    else:
+                        print(f"Value '{truck_cab}' not found in column E.")
+            else:
+                raise Exception(f'Error getting sheet data: {response_get.status_code}, {response_get.text}')
                         
-        print('Sheet updated successfully')
+            print('Sheet updated successfully')
+            
+        except Exception as e:
+            print(f"Error updating cell: {e.status_code}, {e.response}")
+            raise e
         

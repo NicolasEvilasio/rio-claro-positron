@@ -22,7 +22,8 @@ def update_excel_locations_data():
     
     new_data = get_positron_locations_data(
         username=str(Secret.load('positron-username').get()),
-        password=str(Secret.load('positron-password').get())
+        password=str(Secret.load('positron-password').get()),
+        headless=True
     )
     
     excel_data = update_excel_data(
