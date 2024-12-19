@@ -38,14 +38,6 @@ class Positron:
         cls.__display = Display(visible=0, size=(800, 600))
         cls.__display.start()
         
-        # Capturar logs do browser
-        browser_logs = cls.__driver.get_log('browser')
-        print("Browser logs:", browser_logs)
-        
-        # Capturar logs do driver
-        driver_logs = cls.__driver.get_log('driver')
-        print("Driver logs:", driver_logs)
-        
         print("Setting Firefox options")
         options = Options()
         
@@ -63,7 +55,15 @@ class Positron:
         print("Starting Firefox browser")
         cls.__driver = webdriver.Firefox(options=options)
         
-        # Adicionar headers personalizados
+        # Capture browser logs
+        browser_logs = cls.__driver.get_log('browser')
+        print("Browser logs:", browser_logs)
+        
+        # Capture driver logs
+        driver_logs = cls.__driver.get_log('driver')
+        print("Driver logs:", driver_logs)
+        
+        # Add custom headers
         cls.__driver.execute_script("Object.defineProperty(navigator, 'webdriver', {get: () => undefined})")
         
         print("Waiting for the browser to open...")
@@ -87,7 +87,7 @@ class Positron:
         username_input.clear()
         username_input.send_keys(cls.__username)
         
-        # Espera explícita pelo campo de senha
+        # Explicit wait for the password field
         password_input = cls.__wait.until(
             EC.presence_of_element_located((By.ID, "password"))
         )
@@ -96,8 +96,8 @@ class Positron:
         password_input.clear()
         password_input.send_keys(cls.__password)
 
-        # Clicar no botão de login
-        # Espera explícita pelo botão de login
+        # Click the login button
+        # Explicit wait for the login button
         login_button = cls.__wait.until(
             EC.element_to_be_clickable((By.ID, "enterButton"))
         )
@@ -269,11 +269,6 @@ class Positron:
         
         return pd.NA, text
 
-        # Apply the function and create new columns
-        # df[['driver', 'truck_cab']] = pd.DataFrame(df['tracker'].apply(split_tracker).tolist())
-
-        return df
-    
     @classmethod
     def get_locations(cls, total_pages: int) -> pd.DataFrame:
         dfs_pages = []
