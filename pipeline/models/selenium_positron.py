@@ -38,43 +38,27 @@ class Positron:
         cls.__display = Display(visible=0, size=(800, 600))
         cls.__display.start()
         
+        # Capturar logs do browser
+        browser_logs = cls.__driver.get_log('browser')
+        print("Browser logs:", browser_logs)
+        
+        # Capturar logs do driver
+        driver_logs = cls.__driver.get_log('driver')
+        print("Driver logs:", driver_logs)
+        
         print("Setting Firefox options")
         options = Options()
         
         if cls.headless:
             options.add_argument('--headless')
             options.add_argument('--no-sandbox')
-            options.add_argument('--window-size=800,600')
             options.add_argument('--disable-dev-shm-usage')
             options.add_argument('--enable-automation')
-            options.add_argument('--disable-gpu')
             
-            #logs detalhados
-            options.set_preference("devtools.console.stdout.content", True)
-            options.set_preference("browser.dom.window.dump.enabled", True)
-            options.log.level = "trace"
+            # window size config
+            options.set_preference("browser.window.width", 800)
+            options.set_preference("browser.window.height", 600)
             
-            # Simular navegador real
-            options.set_preference("general.useragent.override", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36")
-            options.set_preference("dom.webdriver.enabled", False)
-            options.set_preference('useAutomationExtension', False)
-            
-            # Aceitar cookies e habilitar JavaScript
-            options.set_preference("network.cookie.cookieBehavior", 0)
-            options.set_preference("javascript.enabled", True)
-            
-            # Configurar idioma e timezone
-            options.set_preference("intl.accept_languages", "pt-BR, pt")
-            options.set_preference("browser.timezone.mode", "system")
-            
-            # Simular recursos de hardware
-            options.set_preference("media.navigator.enabled", True)
-            options.set_preference("media.navigator.permission.disabled", True)
-            options.set_preference("dom.webnotifications.enabled", True)
-            
-            # Evitar fingerprinting
-            options.set_preference("privacy.resistFingerprinting", False)
-            options.set_preference("webgl.disabled", False)
             
         print("Starting Firefox browser")
         cls.__driver = webdriver.Firefox(options=options)
